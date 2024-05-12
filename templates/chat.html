@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GPT Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
+	<script src="{{ url_for('static', filename='jquery-3.7.1.min.js') }}"></script>
+</head>
+<body>
+    <h1>GPT Chat</h1>
+    <div class="container">
+        <div class="markdown-content highlight">
+            {{ conversation|safe }}
+        </div>
+        <form method="post" action="{{ url_for('chat') }}" id="ask-form">
+            <label for="query">Введите вопрос:</label>
+            <input type="text" id="query" name="query" placeholder="Ваш вопрос" value="{{ query }}">
+			<div id="token-count">0/{{ max_input_tokens }} токенов</div>
+            
+            <label for="use_sources">
+                <input type="checkbox" id="use_sources" name="use_sources" {% if use_sources %}checked{% endif %}>
+                Использовать источники
+                <span class="tooltip">
+                    <i class="fas fa-question-circle"></i>
+                    <span class="tooltip-text">Будет осуществлен поиск среди ваших источников данных</span>
+                </span>
+            </label>
+            
+            <button type="submit">Отправить</button>
+        </form>
+        <form method="post" action="{{ url_for('update_gpt') }}" id="update-gpt-form">
+            <button type="submit" class="btn-update">Обновить GPT</button>
+            <span class="tooltip">
+                <i class="fas fa-question-circle"></i>
+                <span class="tooltip-text">Данная кнопка перезагрузит сеанс и обнулит запросы</span>
+            </span>
+        </form>
+        <div class="loading-container" id="loading-container">
+            <div class="loader"></div>
+        </div>
+    </div>
+	<script>
+    $(document).ready(function() {
+        $('#query').on('input', function() {
+            var queryText = $(this).val();
+            $.ajax({
+                url: '/count_tokens',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ query: queryText }),
+                success: function(response) {
+                    $('#token-count').text(response.count + (response.valid ? "" : " (превышено максимальное количество)"));
+                },
+                error: function() {
+                    $('#token-count').text('Ошибка подсчета токенов');
+                }
+            });
+        });
+    });
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+	
+</body>
+</html>
